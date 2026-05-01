@@ -2,8 +2,28 @@
 -- Core settings
 -- ================================
 
--- Leader (set early if you add mappings that use <leader> later)
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- Make sure to setup `mapleader` and `maplocalleader` before
+-- loading lazy.nvim so that mappings are correct.
+-- This is also a good place to setup other settings (vim.opt)
 vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
 
 -- UI & Editing
 vim.opt.number = true
@@ -55,10 +75,6 @@ vim.opt.showbreak = "↪ "
 vim.opt.colorcolumn = "80"
 vim.cmd("highlight ColorColumn ctermbg=red")
 
--- Syntax & filetype (syntax is not on by default; filetype plugins are on by default in Neovim)
-vim.cmd("syntax on")
--- (These two are not necessary in Neovim 0.8+ but harmless if you want to keep them)
--- vim.cmd("filetype plugin indent on")
 
 -- Highlight non-text/whitespace (note: 'Whitespace' HL group is used by :match below)
 vim.cmd("highlight NonText ctermfg=Gray guifg=Gray")
@@ -101,3 +117,19 @@ vim.keymap.set("n", "Y", "y$", { noremap = true, silent = true })
 -- Buffer navigation
 vim.keymap.set("n", "<Tab>", ":bnext<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<S-Tab>", ":bprevious<CR>", { noremap = true, silent = true })
+
+-- Setup lazy.nvim
+require("lazy").setup({
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        highlight = {
+          enable = true,          -- enables syntax highlighting
+          additional_vim_regex_highlighting = false,
+        },
+      })
+    end,
+  },
+})
